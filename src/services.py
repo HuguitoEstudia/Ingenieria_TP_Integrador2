@@ -93,8 +93,8 @@ def delete_madurador_by_id(id):
     #Defino el string de Conexion
     cliente=pymongo.MongoClient(MONGO_URI,serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
 
-    baseDatos=cliente[MONGO_BASEDATOS]
-    coleccion=baseDatos["maduradores"]
+    baseDatos = cliente[MONGO_BASEDATOS]
+    coleccion = baseDatos[MONGO_COLECCION]
 
     # Insertamos el documento
     coleccion.delete_one({"_id":objid})
@@ -242,7 +242,6 @@ async def add_record(request: Request):
         return {'inserted_id': str(res.inserted_id)}
     finally:
         cliente.close()
-
 
 
 
