@@ -1,8 +1,12 @@
 from datetime import date
 import json
-from app import app
+import os
 import pymongo
 from bson.objectid import ObjectId
+from fastapi import APIRouter, HTTPException
+
+# Use router to avoid importing the FastAPI app at module import time
+router = APIRouter()
 
 class Response():
     def __init__(self,data):
@@ -17,15 +21,15 @@ MONGO_HOST="localhost"
 MONGO_PUERTO="27017"
 MONGO_TIEMPO_FUERA=1000
 
-MONGO_URI="mongodb://"+MONGO_HOST+":"+MONGO_PUERTO+"/"
+MONGO_URI="mongodb+srv://db_user_TP_PROMO:R4LvCFtcXtb0I3mQ@cluster0.18gaj25.mongodb.net/TPintegrador2?retryWrites=true&w=majority"
 
 MONGO_BASEDATOS="TPintegrador2"
 
 
 #-----------------------------------------
 
-@app.post("/create_madurador/",tags=["madurador"])
-def create_madurador(litros:int,estado:str,lote:dict,notas:str=""):
+@router.post("/create_madurador/", tags=["madurador"])
+def create_madurador(litros: int, estado: str, lote: dict, notas: str = ""):
     documento = {"litros":litros,
                  "estado":estado,
                  "notas":notas,
@@ -44,8 +48,8 @@ def create_madurador(litros:int,estado:str,lote:dict,notas:str=""):
     cliente.close()
 
 
-@app.post("/update_madurador_by_id/",tags=["madurador"])
-def update_madurador(id,litros=None,estado=None,lote=None,notas=None):
+@router.post("/update_madurador_by_id/", tags=["madurador"])
+def update_madurador(id, litros=None, estado=None, lote=None, notas=None):
     
     objid=ObjectId(id)
 
@@ -77,7 +81,7 @@ def update_madurador(id,litros=None,estado=None,lote=None,notas=None):
     cliente.close()
 
 
-@app.post("/delete_madurador_by_id/",tags=["madurador"])
+@router.post("/delete_madurador_by_id/", tags=["madurador"])
 def delete_madurador_by_id(id):
 
     objid=ObjectId(id)
@@ -94,7 +98,7 @@ def delete_madurador_by_id(id):
     # Cierro la conexión a la base de Datos
     cliente.close()
 
-@app.get("/get_all_madurador/",tags=["madurador"])
+@router.get("/get_all_madurador/", tags=["madurador"])
 def find_all_madurador():
 
     #Defino el string de Conexion
@@ -116,7 +120,7 @@ def find_all_madurador():
     return str(Response(lista).toDict())
 
 
-@app.get("/get_madurador_by_id/",tags=["madurador"])
+@router.get("/get_madurador_by_id/", tags=["madurador"])
 def find_madurador_by_id(id):
 
     objid=ObjectId(id)

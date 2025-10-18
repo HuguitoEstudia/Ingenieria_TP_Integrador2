@@ -1,8 +1,9 @@
 // URL base de la API, almacenada en localStorage o por defecto en http://127.0.0.1:8000
 const API_BASE = localStorage.getItem('API_BASE') || 'http://127.0.0.1:8000';
 
-// Mostrar la URL de la API en el elemento #api-url
-document.getElementById('api-url').textContent = API_BASE;
+// Mostrar la URL de la API en el elemento #api-url (si existe)
+const apiUrlEl = document.getElementById('api-url');
+if (apiUrlEl) apiUrlEl.textContent = API_BASE;
 
 // Elementos del DOM
 const $status = document.getElementById('status'); // Estado de la conexión con el backend
@@ -29,7 +30,7 @@ async function health() {
     $status.textContent = 'Backend: ' + j.status;
   } catch (e) {
     // Si hay un error, mostrar un mensaje de desconexión
-    $status.textContent = 'Backend: desconectado';
+    if ($status) $status.textContent = 'Backend: desconectado';
   }
 }
 
@@ -38,7 +39,7 @@ async function health() {
  */
 async function load() {
   // Mostrar un mensaje de carga en la lista
-  $records.innerHTML = 'Cargando...';
+  if ($records) $records.innerHTML = 'Cargando...';
   try {
     // Realizar una solicitud GET a /api/records
     const res = await fetch(API_BASE + '/api/records');
@@ -50,7 +51,7 @@ async function load() {
     render(data);
   } catch (e) {
     // Si hay un error, mostrar un mensaje de error en la lista
-    $records.innerHTML = '<div style="color:#a00">Error cargando registros</div>';
+    if ($records) $records.innerHTML = '<div style="color:#a00">Error cargando registros</div>';
   }
 }
 
@@ -61,18 +62,18 @@ async function load() {
 function render(items) {
   // Si la lista está vacía, mostrar un mensaje
   if (!items || items.length === 0) {
-    $records.innerHTML = '<div style="text-align:center;padding:40px;color:#666">No hay registros disponibles</div>';
+    if ($records) $records.innerHTML = '<div style="text-align:center;padding:40px;color:#666">No hay registros disponibles</div>';
     return;
   }
   // Limpiar la lista
-  $records.innerHTML = '';
+  if ($records) $records.innerHTML = '';
   // Iterar sobre la lista de registros y crear elementos del DOM
   items.forEach((it) => {
     const el = document.createElement('div');
     el.className = 'record';
-    el.innerHTML = `<div><strong>${escapeHTML(it.nombre || '--')}</strong><div style="color:#666">${escapeHTML(it.email || '')}</div></div>
+    el.innerHTML = `<div><strong>${escapeHTML(it.litros ?? '--')}</strong><div style="color:#666">${escapeHTML(it.estado ?? '')}</div></div>
       <div><button data-id="${it._id}" class="edit">Editar</button> <button data-id="${it._id}" class="del secondary">Eliminar</button></div>`;
-    $records.appendChild(el);
+    if ($records) $records.appendChild(el);
   });
 }
 
@@ -86,28 +87,28 @@ function escapeHTML(s) {
 }
 
 // Eventos
-$refresh.addEventListener('click', () => load()); // Refrescar la lista al hacer clic en el botón
-$openAdd.addEventListener('click', () => {
+if ($refresh) $refresh.addEventListener('click', () => load()); // Refrescar la lista al hacer clic en el botón
+if ($openAdd) $openAdd.addEventListener('click', () => {
   // Abrir el formulario de agregar al hacer clic en el botón
-  $formSection.classList.remove('hidden');
-  $listSection.classList.add('hidden');
-  $form.reset();
-  document.getElementById('form-title').textContent = 'Agregar Registro';
+  if ($formSection) $formSection.classList.remove('hidden');
+  if ($listSection) $listSection.classList.add('hidden');
+  if ($form) $form.reset();
+  const title = document.getElementById('form-title'); if (title) title.textContent = 'Agregar Registro';
 });
-$cancel.addEventListener('click', () => {
+if ($cancel) $cancel.addEventListener('click', () => {
   // Cancelar el formulario al hacer clic en el botón
-  $formSection.classList.add('hidden');
-  $listSection.classList.remove('hidden');
+  if ($formSection) $formSection.classList.add('hidden');
+  if ($listSection) $listSection.classList.remove('hidden');
 });
 
-$records.addEventListener('click', async (e) => {
+if ($records) $records.addEventListener('click', async (e) => {
   // Obtener el ID del registro al hacer clic en un botón de editar o eliminar
   const id = e.target.dataset.id;
   if (!id) return;
   // Eliminar el registro al hacer clic en el botón de eliminar
   if (e.target.classList.contains('del')) {
     if (!confirm('Confirmar eliminación')) return;
-    await fetch(API_BASE + '/delete/' + id, { method: 'POST' });
+    await fetch(API_BASE + '/delete_madurador_by_id/', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: `id=${encodeURIComponent(id)}` });
     await load();
   }
   // Editar el registro al hacer clic en el botón de editar (no implementado)
@@ -116,7 +117,7 @@ $records.addEventListener('click', async (e) => {
   }
 });
 
-$form.addEventListener('submit', async (e) => {
+if ($form) $form.addEventListener('submit', async (e) => {
   // Prevenir el envío del formulario por defecto
   e.preventDefault();
   // Crear un objeto FormData a partir del formulario
@@ -128,8 +129,8 @@ $form.addEventListener('submit', async (e) => {
   const res = await fetch(API_BASE + '/add', { method: 'POST', body: payload });
   // Si la respuesta es OK, cerrar el formulario y refrescar la lista
   if (res.ok) {
-    $formSection.classList.add('hidden');
-    $listSection.classList.remove('hidden');
+    if ($formSection) $formSection.classList.add('hidden');
+    if ($listSection) $listSection.classList.remove('hidden');
     load();
   } else {
     // Si hay un error, mostrar un mensaje de error

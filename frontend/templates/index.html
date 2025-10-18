@@ -1,21 +1,7 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Frontend - TP Integrador</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <header class="top">
-   <h1>TP INTEGRADOR 2 - MONGODB</h1>
+{% extends 'base.html' %}
 
-
-
-    <p id="status">Conectando al backend...</p>
-  </header>
-
-  <main id="app">
+{% block content %}
+  <section>
     <section>
       <button id="refresh">Refrescar registros</button>
       <button id="open-add">Agregar nuevo</button>
@@ -35,7 +21,7 @@
                 <option value="" disabled selected>Selecciona un estado</option>  
                 <option value="activo">Activo</option>
                 <option value="cargado">Cargado</option>
-                <option value="sucio ">Sucio</option>
+                <option value="sucio">Sucio</option>
                 <option value="mantenimiento">Mantenimiento</option>
                 <option value="inactivo">Inactivo</option>
             </select>
@@ -48,20 +34,5 @@
         </div>
       </form>
     </section>
-  </main>
-
-  <footer>
-   
-    <small>Front-end estático consumiendo la API en <code id="api-url">http://127.0.0.1:8000</code></small>
-    <div class="l">
-        <h2>Estudiantes</h2>
-        <h3>Gilardoni Hugo</h3>
-        <h3>Giudice Octavio</h3>
-        <h3>Guzmán Ezequiel</h3>
-        <h3>Sarmiento Elias</h3>
-  </div>
-  </footer>
-
-  <script src="app.js"></script>
-</body>
-</html>
+  </section>
+{% endblock %}
