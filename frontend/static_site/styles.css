@@ -225,3 +225,40 @@ footer h3 {
 h1:hover {
   animation: glitch 1s linear infinite;
 }
+
+
+select {
+    background: rgba(50, 50, 80, 0.8);
+    border: 1px solid var(--primary-color);
+    color: var(--text-color);
+    padding: 0.75rem;
+    border-radius: 5px;
+    appearance: none; /* Elimina el estilo por defecto */
+    outline: none;
+    transition: all 0.3s ease;
+    background-image: linear-gradient(45deg, transparent 50%, var(--primary-color) 50%),
+                      linear-gradient(135deg, var(--primary-color) 50%, transparent 50%);
+    background-position: calc(100% - 20px) calc(1em + 2px),
+                         calc(100% - 15px) calc(1em + 2px);
+    background-size: 5px 5px,
+                     5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+    background-image: linear-gradient(45deg, transparent 50%, var(--secondary-color) 50%),
+                      linear-gradient(135deg, var(--secondary-color) 50%, transparent 50%);
+}
+
+select option {
+    background: var(--background-dark);
+    color: var(--text-color);
+}
+
+select option:checked {
+    background: var(--primary-color);
+    color: var(--background-dark);
+}
