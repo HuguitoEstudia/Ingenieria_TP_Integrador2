@@ -1,8 +1,15 @@
 from datetime import date
 import json
-from app import app
 import pymongo
 from bson.objectid import ObjectId
+from typing import List, Optional
+from fastapi import Depends, Body, APIRouter, Form, HTTPException, Request
+import os
+from pathlib import Path
+
+# Use an APIRouter so this module does not import the FastAPI `app` at import-time
+router = APIRouter()
+
 
 class Response():
     def __init__(self,data):
@@ -13,18 +20,19 @@ class Response():
 
 #Defino la base de datos y la colección
 
-MONGO_HOST="localhost"
-MONGO_PUERTO="27017"
-MONGO_TIEMPO_FUERA=1000
+MONGO_TIEMPO_FUERA = int(os.environ.get('MONGO_TIMEOUT_MS', '1000'))
 
-MONGO_URI="mongodb://"+MONGO_HOST+":"+MONGO_PUERTO+"/"
+# Preferred: full connection string from env (for Atlas or custom setups)
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/')
 
-MONGO_BASEDATOS="TPintegrador2"
+# Database and collection names
+MONGO_BASEDATOS = os.environ.get('MONGO_DATABASE', 'TPintegrador2')
+MONGO_COLECCION = os.environ.get('MONGO_COLLECTION', 'maduradores')
 
 
 #-----------------------------------------
 
-@app.post("/create_madurador/",tags=["madurador"])
+@router.post("/create_madurador/",tags=["madurador"])
 def create_madurador(litros:int,estado:str,lote:dict,notas:str=""):
     documento = {"litros":litros,
                  "estado":estado,
@@ -34,8 +42,8 @@ def create_madurador(litros:int,estado:str,lote:dict,notas:str=""):
     #Defino el string de Conexion
     cliente=pymongo.MongoClient(MONGO_URI,serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
 
-    baseDatos=cliente[MONGO_BASEDATOS]
-    coleccion=baseDatos["maduradores"]
+    baseDatos = cliente[MONGO_BASEDATOS]
+    coleccion = baseDatos[MONGO_COLECCION]
 
     # Insertamos el documento
     coleccion.insert_one(documento)
@@ -44,7 +52,7 @@ def create_madurador(litros:int,estado:str,lote:dict,notas:str=""):
     cliente.close()
 
 
-@app.post("/update_madurador_by_id/",tags=["madurador"])
+@router.post("/update_madurador_by_id/",tags=["madurador"])
 def update_madurador(id,litros=None,estado=None,lote=None,notas=None):
     
     objid=ObjectId(id)
@@ -77,7 +85,7 @@ def update_madurador(id,litros=None,estado=None,lote=None,notas=None):
     cliente.close()
 
 
-@app.post("/delete_madurador_by_id/",tags=["madurador"])
+@router.post("/delete_madurador_by_id/",tags=["madurador"])
 def delete_madurador_by_id(id):
 
     objid=ObjectId(id)
@@ -94,14 +102,14 @@ def delete_madurador_by_id(id):
     # Cierro la conexión a la base de Datos
     cliente.close()
 
-@app.get("/get_all_madurador/",tags=["madurador"])
+@router.get("/get_all_madurador/",tags=["madurador"])
 def find_all_madurador():
 
     #Defino el string de Conexion
     cliente=pymongo.MongoClient(MONGO_URI,serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
 
-    baseDatos=cliente[MONGO_BASEDATOS]
-    coleccion=baseDatos["maduradores"]
+    baseDatos = cliente[MONGO_BASEDATOS]
+    coleccion = baseDatos[MONGO_COLECCION]
 
     # Ejecuto un find para traer todos los documentos de la colección y los asigno a la variable documentos
     documentos = coleccion.find()
@@ -116,7 +124,7 @@ def find_all_madurador():
     return str(Response(lista).toDict())
 
 
-@app.get("/get_madurador_by_id/",tags=["madurador"])
+@router.get("/get_madurador_by_id/",tags=["madurador"])
 def find_madurador_by_id(id):
 
     objid=ObjectId(id)
@@ -133,5 +141,119 @@ def find_madurador_by_id(id):
     cliente.close()
 
     return str(Response(documentos).toDict())
+
+
+
+
+
+
+
+
+
+#==============================================================================================================================================================
+
+
+
+
+
+
+
+
+# Simple health endpoint used by the static SPA
+@router.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+# Compatibility endpoint for the SPA: returns a plain list of records
+@router.get("/api/records")
+def api_records():
+    try:
+        result = find_all_madurador()
+        # find_all_madurador returns {"data": [...]} so extract the list
+        if isinstance(result, dict):
+            return result.get("data", [])
+        return result
+    except Exception:
+        return []
+
+
+# Compatibility endpoint the static SPA expects: accept form-encoded data at /add
+@router.post('/add')
+async def add_record(request: Request):
+    """Accept form-encoded or JSON payloads with fields:
+    litros, estado, notas, lote. Returns inserted_id on success.
+    """
+    litros = None
+    estado = None
+    notas = None
+    lote = None
+
+    # Try to read form data first (works for urlencoded and multipart)
+    try:
+        form = await request.form()
+        if form:
+            litros = form.get('litros')
+            estado = form.get('estado')
+            notas = form.get('notas')
+            lote = form.get('lote')
+    except Exception:
+        pass
+
+    # If no form data, try JSON body
+    if not litros and not lote:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                litros = body.get('litros', litros)
+                estado = body.get('estado', estado)
+                notas = body.get('notas', notas)
+                lote = body.get('lote', lote)
+        except Exception:
+            pass
+
+    # Basic validation: require litros, lote and estado
+    if litros is None or lote is None or estado is None:
+        raise HTTPException(status_code=422, detail='`litros`, `estado` and `lote` are required')
+
+    # normalize litros to number if possible
+    try:
+        # accept integer or float strings
+        if isinstance(litros, str) and ('.' in litros or ',' in litros):
+            litros = float(litros.replace(',','.'))
+        else:
+            litros = int(litros)
+    except Exception:
+        # leave as-is if cannot convert
+        pass
+
+    documento = {
+        'litros': litros,
+        'estado': estado,
+        'notas': notas,
+        'lote': lote,
+    }
+
+    cliente = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
+    try:
+        baseDatos = cliente[MONGO_BASEDATOS]
+        coleccion = baseDatos[MONGO_COLECCION]
+        res = coleccion.insert_one(documento)
+        return {'inserted_id': str(res.inserted_id)}
+    finally:
+        cliente.close()
+
+
+
+
+
+# Optional: additional routes can be added to the router
+# @router.get("/get_madurador_by_id/{item_id}", tags=["madurador"])
+# def find_madurador_by_id():
+    
+
+# @router.post("/delete_madurador_by_id/{item_id}", tags=["madurador"])
+# def delete_madurador_by_id():
+
     
     
