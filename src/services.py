@@ -31,7 +31,7 @@ class Response():
 MONGO_TIEMPO_FUERA = int(os.environ.get('MONGO_TIMEOUT_MS', '1000'))
 
 # Preferred: full connection string from env (for Atlas or custom setups)
-MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://db_user_TP_PROMO:R4LvCFtcXtb0I3mQ@cluster0.18gaj25.mongodb.net/')
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/')
 
 # Database and collection names
 MONGO_BASEDATOS = os.environ.get('MONGO_DATABASE', 'TPintegrador2')
