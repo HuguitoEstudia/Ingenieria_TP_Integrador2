@@ -1,9 +1,23 @@
 from datetime import date
 import json
 from typing import List, Optional
-from fastapi import Depends,Body
-from app import app
+from fastapi import Depends, Body, APIRouter
 import pymongo
+import os
+from pathlib import Path
+
+# Optionally load a .env file if present (development convenience)
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).resolve().parents[1] / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+except Exception:
+    # python-dotenv not installed or .env not present — skip silently
+    pass
+
+# Use an APIRouter so this module does not import the FastAPI `app` at import-time
+router = APIRouter()
 
 class Response():
     def __init__(self,data):
@@ -14,19 +28,20 @@ class Response():
 
 #Defino la base de datos y la colección
 
-MONGO_HOST="localhost"
-MONGO_PUERTO="27017"
-MONGO_TIEMPO_FUERA=1000
+MONGO_TIEMPO_FUERA = int(os.environ.get('MONGO_TIMEOUT_MS', '1000'))
 
-MONGO_URI="mongodb://"+MONGO_HOST+":"+MONGO_PUERTO+"/"
+# Preferred: full connection string from env (for Atlas or custom setups)
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://db_user_TP_PROMO:R4LvCFtcXtb0I3mQ@cluster0.18gaj25.mongodb.net/')
 
-MONGO_BASEDATOS="TPintegrador2"
+# Database and collection names
+MONGO_BASEDATOS = os.environ.get('MONGO_DATABASE', 'TPintegrador2')
+MONGO_COLECCION = os.environ.get('MONGO_COLLECTION', 'maduradores')
 
 
 #-----------------------------------------
 
-@app.post("/create_madurador/",tags=["madurador"])
-def create_lote(litros,estado,notas,lote):
+@router.post("/create_madurador/", tags=["madurador"])
+def create_lote(litros, estado, notas, lote):
     documento = {"litros":litros,
                  "estado":estado,
                  "notas":notas,
@@ -35,8 +50,8 @@ def create_lote(litros,estado,notas,lote):
     #Defino el string de Conexion
     cliente=pymongo.MongoClient(MONGO_URI,serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
 
-    baseDatos=cliente[MONGO_BASEDATOS]
-    coleccion=baseDatos["maduradores"]
+    baseDatos = cliente[MONGO_BASEDATOS]
+    coleccion = baseDatos[MONGO_COLECCION]
 
     # Insertamos el documento
     coleccion.insert_one(documento)
@@ -45,14 +60,14 @@ def create_lote(litros,estado,notas,lote):
     cliente.close()
 
 
-@app.get("/get_all_madurador/",tags=["madurador"])
+@router.get("/get_all_madurador/", tags=["madurador"])
 def find_all_madurador():
 
     #Defino el string de Conexion
     cliente=pymongo.MongoClient(MONGO_URI,serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
 
-    baseDatos=cliente[MONGO_BASEDATOS]
-    coleccion=baseDatos["maduradores"]
+    baseDatos = cliente[MONGO_BASEDATOS]
+    coleccion = baseDatos[MONGO_COLECCION]
 
     # Ejecuto un find para traer todos los documentos de la colección y los asigno a la variable documentos
     documentos = coleccion.find()
@@ -67,10 +82,30 @@ def find_all_madurador():
     return Response(lista).toDict()
 
 
-# @app.get("/get_madurador_by_id/{item_id}",tags=["madurador"])
+# Simple health endpoint used by the static SPA
+@router.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+# Compatibility endpoint for the SPA: returns a plain list of records
+@router.get("/api/records")
+def api_records():
+    try:
+        result = find_all_madurador()
+        # find_all_madurador returns {"data": [...]} so extract the list
+        if isinstance(result, dict):
+            return result.get("data", [])
+        return result
+    except Exception:
+        return []
+
+
+# Optional: additional routes can be added to the router
+# @router.get("/get_madurador_by_id/{item_id}", tags=["madurador"])
 # def find_madurador_by_id():
     
 
-# @app.post("/delete_madurador_by_id/{item_id}",tags=["madurador"])
+# @router.post("/delete_madurador_by_id/{item_id}", tags=["madurador"])
 # def delete_madurador_by_id():
     
