@@ -1,7 +1,8 @@
 from datetime import date
 import json
 from typing import List, Optional
-from fastapi import Depends, Body, APIRouter
+from fastapi import Depends, Body, APIRouter, Form, HTTPException, Request
+from bson.objectid import ObjectId
 import pymongo
 import os
 from pathlib import Path
@@ -99,6 +100,92 @@ def api_records():
         return result
     except Exception:
         return []
+
+
+# Compatibility endpoint the static SPA expects: accept form-encoded data at /add
+@router.post('/add')
+async def add_record(request: Request):
+    """Accept form-encoded or JSON payloads with fields:
+    litros, estado, notas, lote. Returns inserted_id on success.
+    """
+    litros = None
+    estado = None
+    notas = None
+    lote = None
+
+    # Try to read form data first (works for urlencoded and multipart)
+    try:
+        form = await request.form()
+        if form:
+            litros = form.get('litros')
+            estado = form.get('estado')
+            notas = form.get('notas')
+            lote = form.get('lote')
+    except Exception:
+        pass
+
+    # If no form data, try JSON body
+    if not litros and not lote:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                litros = body.get('litros', litros)
+                estado = body.get('estado', estado)
+                notas = body.get('notas', notas)
+                lote = body.get('lote', lote)
+        except Exception:
+            pass
+
+    # Basic validation: require litros, lote and estado
+    if litros is None or lote is None or estado is None:
+        raise HTTPException(status_code=422, detail='`litros`, `estado` and `lote` are required')
+
+    # normalize litros to number if possible
+    try:
+        # accept integer or float strings
+        if isinstance(litros, str) and ('.' in litros or ',' in litros):
+            litros = float(litros.replace(',','.'))
+        else:
+            litros = int(litros)
+    except Exception:
+        # leave as-is if cannot convert
+        pass
+
+    documento = {
+        'litros': litros,
+        'estado': estado,
+        'notas': notas,
+        'lote': lote,
+    }
+
+    cliente = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
+    try:
+        baseDatos = cliente[MONGO_BASEDATOS]
+        coleccion = baseDatos[MONGO_COLECCION]
+        res = coleccion.insert_one(documento)
+        return {'inserted_id': str(res.inserted_id)}
+    finally:
+        cliente.close()
+
+
+# Compatibility delete: POST /delete/{item_id}
+@router.post('/delete/{item_id}')
+def delete_record(item_id: str):
+    try:
+        oid = ObjectId(item_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail='invalid id')
+
+    cliente = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
+    try:
+        baseDatos = cliente[MONGO_BASEDATOS]
+        coleccion = baseDatos[MONGO_COLECCION]
+        res = coleccion.delete_one({'_id': oid})
+        if res.deleted_count == 0:
+            raise HTTPException(status_code=404, detail='not found')
+        return {'deleted': True}
+    finally:
+        cliente.close()
 
 
 # Optional: additional routes can be added to the router
