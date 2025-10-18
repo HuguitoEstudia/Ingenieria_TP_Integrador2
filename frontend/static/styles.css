@@ -139,6 +139,26 @@ label {
   display: none;
 }
 
+.record { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.record-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; align-items: center; }
+.field { display:flex; justify-content: space-between; }
+.label { color: var(--primary-color); font-weight: 700; margin-right: 8px; }
+.value { color: var(--text-color); }
+.actions-row { margin-top: 8px; }
+
+.record-card {
+  border: 1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+.card-header { font-size: 0.8rem; color: var(--primary-color); margin-bottom: 8px; }
+.doc-id { font-family: monospace; color: #ddd; }
+.card-body { padding: 6px 0; }
+.card-actions { margin-top: 10px; display:flex; gap:8px; }
+
 footer {
   background: linear-gradient(
     135deg, 

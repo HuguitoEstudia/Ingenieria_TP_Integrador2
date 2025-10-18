@@ -68,12 +68,23 @@ function render(items) {
   // Limpiar la lista
   if ($records) $records.innerHTML = '';
   // Iterar sobre la lista de registros y crear elementos del DOM
-  items.forEach((it) => {
-    const el = document.createElement('div');
-    el.className = 'record';
-    el.innerHTML = `<div><strong>${escapeHTML(it.litros ?? '--')}</strong><div style="color:#666">${escapeHTML(it.estado ?? '')}</div></div>
-      <div><button data-id="${it._id}" class="edit">Editar</button> <button data-id="${it._id}" class="del secondary">Eliminar</button></div>`;
-    if ($records) $records.appendChild(el);
+  items.forEach((it, idx) => {
+    const card = document.createElement('div');
+    card.className = 'record-card';
+    // Display a 1-based incremental index for the frontend instead of the Mongo ObjectId
+    card.innerHTML = `
+      <div class="card-header">Registro #${idx + 1}</div>
+      <div class="card-body">
+        <div class="record-grid">
+          <div class="field"><span class="label">Litros:</span><span class="value">${escapeHTML(it.litros ?? '--')}</span></div>
+          <div class="field"><span class="label">Estado:</span><span class="value">${escapeHTML(it.estado ?? '')}</span></div>
+          <div class="field"><span class="label">Notas:</span><span class="value">${escapeHTML(it.notas ?? '')}</span></div>
+          <div class="field"><span class="label">Lote:</span><span class="value">${escapeHTML(it.lote ?? '')}</span></div>
+        </div>
+      </div>
+      <div class="card-actions"><button data-id="${it._id}" class="edit">Editar</button> <button data-id="${it._id}" class="del secondary">Eliminar</button></div>
+    `;
+    if ($records) $records.appendChild(card);
   });
 }
 

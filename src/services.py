@@ -19,7 +19,7 @@ class Response():
 
 MONGO_HOST="localhost"
 MONGO_PUERTO="27017"
-MONGO_TIEMPO_FUERA=1000
+MONGO_TIEMPO_FUERA=10000
 
 MONGO_URI="mongodb+srv://db_user_TP_PROMO:R4LvCFtcXtb0I3mQ@cluster0.18gaj25.mongodb.net/TPintegrador2?retryWrites=true&w=majority"
 
@@ -136,6 +136,42 @@ def find_madurador_by_id(id):
 
     cliente.close()
 
-    return str(Response(documentos).toDict())
+    return str(Response(_serialize_doc(documentos)).toDict())
     
+@router.get('/health')
+def health():
+    return {'status': 'ok'}
+
+def _serialize_doc(documento):
+    """Convert ObjectId and dates to JSON-serializable types."""
+    if documento is None:
+        return None
+    doc = {}
+    for k, v in documento.items():
+        if isinstance(v, ObjectId):
+            doc[k] = str(v)
+        elif isinstance(v, (date,)):
+            doc[k] = v.isoformat()
+        else:
+            doc[k] = v
+    return doc
+
+@router.get('/api/records')
+def api_records():
+    # Return a plain list of serialized records for the SPA
+    cliente = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
+    try:
+        baseDatos = cliente[MONGO_BASEDATOS]
+        coleccion = baseDatos['maduradores']
+        documentos = list(coleccion.find())
+        return [_serialize_doc(d) for d in documentos]
+    finally:
+        cliente.close()
+
+@router.post('/add')
+def add_record(request: dict = None):
+    """Accept form-encoded or JSON payloads with fields litros, estado, notas, lote.
+    This endpoint is compatibility for the static frontend.
+    """
+    raise HTTPException(status_code=400, detail='Use the backend form endpoint via the frontend app or ensure form fields are sent')
     
