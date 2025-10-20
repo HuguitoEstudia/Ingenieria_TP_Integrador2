@@ -1,5 +1,5 @@
 from datetime import date
-import json
+from ast import literal_eval
 import os
 import pymongo
 from bson.objectid import ObjectId
@@ -33,13 +33,13 @@ MONGO_BASEDATOS="TPintegrador2"
 @router.post("/create_madurador/", tags=["madurador"])
 def create_madurador(litros:int, estado:str, lote:str, notas:str = ""):
 
-    lote = lote.replace("'",'"')
-    lote = json.loads(lote)
+    lotedict = literal_eval(lote)
+    lotedict["_id"] = ObjectId(lotedict["_id"])
     
     documento = {"litros":litros,
                 "estado":estado,
                 "notas":notas,
-                "lote":lote}
+                "lote":lotedict}
     
     #Defino el string de Conexion
     cliente=pymongo.MongoClient(MONGO_URI,serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
@@ -57,7 +57,7 @@ def create_madurador(litros:int, estado:str, lote:str, notas:str = ""):
 
 
 @router.post("/update_madurador_by_id/", tags=["madurador"])
-def update_madurador(id, litros=None, estado=None, lote=None, notas=None):
+def update_madurador_by_id(id:str, litros=None, estado=None, lote=None, notas=None):
     
     objid=ObjectId(id)
 
@@ -71,9 +71,9 @@ def update_madurador(id, litros=None, estado=None, lote=None, notas=None):
         nuevos_datos["estado"]=str(estado)
     
     if lote != None:
-        lote = lote.replace("'",'"')
-        lote = json.loads(lote)
-        nuevos_datos["lote"]=lote
+        lotedict = literal_eval(lote)
+        lotedict["_id"] = ObjectId(lotedict["_id"])
+        nuevos_datos["lote"]=lotedict
 
     if notas != None:
         nuevos_datos["notas"]=str(notas)
@@ -93,7 +93,7 @@ def update_madurador(id, litros=None, estado=None, lote=None, notas=None):
 
 
 @router.post("/delete_madurador_by_id/", tags=["madurador"])
-def delete_madurador_by_id(id):
+def delete_madurador_by_id(id:str):
 
     objid=ObjectId(id)
 
@@ -110,7 +110,7 @@ def delete_madurador_by_id(id):
     cliente.close()
 
 
-@router.get("/get_all_madurador/", tags=["madurador"])
+@router.get("/find_all_madurador/", tags=["madurador"])
 def find_all_madurador():
 
     #Defino el string de Conexion
@@ -132,8 +132,8 @@ def find_all_madurador():
     return str(Response(lista).toDict())
 
 
-@router.get("/get_madurador_by_id/", tags=["madurador"])
-def find_madurador_by_id(id):
+@router.get("/find_madurador_by_id/", tags=["madurador"])
+def find_madurador_by_id(id:str):
 
     objid=ObjectId(id)
      
@@ -178,7 +178,7 @@ def create_lote(cerveza:str, estado:str, cantidadLitros:int, fechaCarga:str, fec
 
 
 @router.post("/update_lote_by_id/", tags=["lote"])
-def update_lote(id, cerveza=None, cantidadLitros=None, estado=None, fechaCarga=None, fechaVencimiento=None, notas=None):
+def update_lote_by_id(id:str, cerveza=None, cantidadLitros=None, estado=None, fechaCarga=None, fechaVencimiento=None, notas=None):
     
     objid=ObjectId(id)
 
@@ -218,7 +218,7 @@ def update_lote(id, cerveza=None, cantidadLitros=None, estado=None, fechaCarga=N
 
 
 @router.post("/delete_lote_by_id/", tags=["lote"])
-def delete_lote_by_id(id):
+def delete_lote_by_id(id:str):
 
     objid=ObjectId(id)
 
@@ -235,7 +235,7 @@ def delete_lote_by_id(id):
     cliente.close()
 
 
-@router.get("/get_all_lote/", tags=["lote"])
+@router.get("/find_all_lote/", tags=["lote"])
 def find_all_lote():
 
     #Defino el string de Conexion
@@ -257,8 +257,8 @@ def find_all_lote():
     return str(Response(lista).toDict())
 
 
-@router.get("/get_lote_by_id/", tags=["lote"])
-def find_lote_by_id(id):
+@router.get("/find_lote_by_id/", tags=["lote"])
+def find_lote_by_id(id:str):
 
     objid=ObjectId(id)
      
