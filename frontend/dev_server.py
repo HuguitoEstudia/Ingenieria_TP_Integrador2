@@ -1,18 +1,4 @@
-"""
-Simple dev helper to serve the static SPA and optionally launch the src backend (uvicorn).
-Usage (from project root, using the venv python):
 
-C:/path/to/.venv/Scripts/python.exe frontend/dev_server.py --serve-port 5500 --backend --backend-port 8000
-
-Flags:
-  --serve-port: port to serve the SPA (default 5500)
-  --backend: if provided, launches the backend using uvicorn in a subprocess
-  --backend-port: port to run uvicorn on (default 8000)
-
-Notes:
-- The backend will be started with `uvicorn app:app --host 127.0.0.1 --port <port> --reload` assuming your backend's entrypoint is `src/app.py` which exposes `app` (this repo uses `app:app`).
-- This script runs the static server in the foreground; backend runs as a child process which is terminated when this script exits.
-"""
 import argparse
 import http.server
 import socketserver
@@ -27,9 +13,9 @@ STATIC_DIR = ROOT / 'frontend' / 'static_site'
 
 
 def _load_env_file_into_environ(env_path: Path) -> None:
-    """Small .env loader: sets values into os.environ. Ignores comments and blank lines.
-    Handles simple KEY=VALUE and strips surrounding quotes from values.
-    """
+    # """Small .env loader: sets values into os.environ. Ignores comments and blank lines.
+    # Handles simple KEY=VALUE and strips surrounding quotes from values.
+    
     if not env_path.exists():
         return
     try:
