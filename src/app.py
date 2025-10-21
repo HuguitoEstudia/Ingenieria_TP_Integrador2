@@ -1,9 +1,9 @@
-import uvicorn
+import uvicorn  # arma un servidor local
 from fastapi import FastAPI
 
 app = FastAPI()
 
-# Allow cross-origin requests from the frontend dev server
+# Permitir solicitudes de origen cruzado desde el servidor de desarrollo frontend
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import services.router here (after creating `app`) to avoid circular import during module import
+# Importe services.router aquí (después de crear `app`) para evitar la importación circular durante la importación del módulo
 from services import router as services_router
 app.include_router(services_router)
 
