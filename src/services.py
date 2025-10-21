@@ -5,7 +5,7 @@ import pymongo
 from bson.objectid import ObjectId
 from fastapi import APIRouter, HTTPException
 
-# Use router to avoid importing the FastAPI app at module import time
+# # Utilice el enrutador para evitar importar la aplicación FastAPI en el momento de importar el módulo
 router = APIRouter()
 
 class Response():
