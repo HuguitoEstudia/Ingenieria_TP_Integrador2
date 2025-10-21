@@ -2,6 +2,7 @@
 
 fastapi[standard]
 pymongo
+requests
 
 uvicorn frontend.app:app --reload --port 5000
 uvicorn src.app:app --reload --port 8000
