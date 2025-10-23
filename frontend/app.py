@@ -15,7 +15,8 @@ TEMPLATES_DIR = str((BASEDIR / 'templates').resolve())
 app.mount('/static', StaticFiles(directory=STATIC_DIR), name='static')
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-BACKEND_URL = os.environ.get('FRONTEND_BACKEND_URL', 'http://localhost:8000')
+# Por defecto, apunta al backend que corremos en el proyecto (puerto 8001)
+BACKEND_URL = os.environ.get('FRONTEND_BACKEND_URL', 'http://localhost:8001')
 
 
 def backend_get(path: str):

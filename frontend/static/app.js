@@ -1,5 +1,6 @@
-// URL base de la API, almacenada en localStorage o por defecto en http://127.0.0.1:8000
-const API_BASE = localStorage.getItem('API_BASE') || 'http://127.0.0.1:8000';
+// URL base de la API, almacenada en localStorage o por defecto en http://127.0.0.1:8001
+// Cambia este valor desde el navegador con: localStorage.setItem('API_BASE', 'http://127.0.0.1:8001')
+const API_BASE = localStorage.getItem('API_BASE') || 'http://127.0.0.1:8001';
 
 // Mostrar la URL de la API en el elemento #api-url (si existe)
 const apiUrlEl = document.getElementById('api-url');
@@ -71,7 +72,13 @@ function render(items) {
   items.forEach((it, idx) => {
     const card = document.createElement('div');
     card.className = 'record-card';
-    // Display a 1-based incremental index for the frontend instead of the Mongo ObjectId
+    // Muestra por pantalla un índice incremental basado en 1 para el frontend en lugar del ObjectId de Mongo
+    // Mostrar solo el número del lote: prioridad valor -> dígitos en nombre -> dígitos en _id
+    let loteDisplay = '';
+    const loteVal = it.lote;
+    const loteNum = extractLoteNumber(loteVal);
+    loteDisplay = loteNum ? escapeHTML(loteNum) : '--';
+
     card.innerHTML = `
       <div class="card-header">Registro #${idx + 1}</div>
       <div class="card-body">
@@ -79,7 +86,7 @@ function render(items) {
           <div class="field"><span class="label">Litros:</span><span class="value">${escapeHTML(it.litros ?? '--')}</span></div>
           <div class="field"><span class="label">Estado:</span><span class="value">${escapeHTML(it.estado ?? '')}</span></div>
           <div class="field"><span class="label">Notas:</span><span class="value">${escapeHTML(it.notas ?? '')}</span></div>
-          <div class="field"><span class="label">Lote:</span><span class="value">${escapeHTML(it.lote ?? '')}</span></div>
+          <div class="field"><span class="label">Lote:</span><span class="value">${loteDisplay}</span></div>
         </div>
       </div>
       <div class="card-actions"><button data-id="${it._id}" class="edit">Editar</button> <button data-id="${it._id}" class="del secondary">Eliminar</button></div>
@@ -95,6 +102,34 @@ function render(items) {
  */
 function escapeHTML(s) {
   return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
+// Pequeña ayuda para generar un string hexadecimal de 24 caracteres para un ObjectId de marcador de posición
+function genObjectId() {
+  const hex = '0123456789abcdef';
+  let s = '';
+  for (let i = 0; i < 24; i++) s += hex[Math.floor(Math.random() * 16)];
+  return s;
+}
+
+// Extrae el número del lote: prioriza lote.valor, luego dígitos en lote.nombre o en la cadena
+function extractLoteNumber(lote) {
+  if (lote == null) return '';
+  if (typeof lote === 'object') {
+    if (lote.valor !== undefined && lote.valor !== null) return String(lote.valor);
+    if (lote.nombre) {
+      const m = String(lote.nombre).match(/\d+/);
+      return m ? m[0] : String(lote.nombre);
+    }
+    if (lote._id) {
+      const m = String(lote._id).match(/\d+/);
+      return m ? m[0] : String(lote._id);
+    }
+    return JSON.stringify(lote);
+  }
+  // string
+  const m = String(lote).match(/\d+/);
+  return m ? m[0] : String(lote);
 }
 
 // Eventos
@@ -119,33 +154,135 @@ if ($records) $records.addEventListener('click', async (e) => {
   // Eliminar el registro al hacer clic en el botón de eliminar
   if (e.target.classList.contains('del')) {
     if (!confirm('Confirmar eliminación')) return;
-    await fetch(API_BASE + '/delete_madurador_by_id/', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: `id=${encodeURIComponent(id)}` });
+    const urlDel = API_BASE + '/delete_madurador_by_id/?' + new URLSearchParams({ id }).toString();
+    await fetch(urlDel, { method: 'POST' });
     await load();
   }
-  // Editar el registro al hacer clic en el botón de editar (no implementado)
+  // Editar el registro al hacer clic en el botón de editar: cargar datos en el formulario
   if (e.target.classList.contains('edit')) {
-    alert('Editar no implementado en la SPA - use el backend directamente');
+    try {
+      const res = await fetch(API_BASE + '/api/records');
+      if (!res.ok) throw new Error('error al obtener registros');
+      const items = await res.json();
+      const item = items.find(it => it._id === id);
+      if (!item) throw new Error('registro no encontrado');
+      // Rellenar formulario con los valores
+      if ($form) {
+        let idEl = document.getElementById('record-id');
+        if (!idEl) {
+          idEl = document.createElement('input');
+          idEl.type = 'hidden';
+          idEl.id = 'record-id';
+          idEl.name = 'id';
+          $form.appendChild(idEl);
+        }
+        idEl.value = item._id || '';
+        // Preservar el objeto lote original para poder reutilizar su _id en la actualización
+        let loteObjEl = document.getElementById('lote-obj');
+        if (!loteObjEl) {
+          loteObjEl = document.createElement('input');
+          loteObjEl.type = 'hidden';
+          loteObjEl.id = 'lote-obj';
+          loteObjEl.name = 'lote_obj';
+          $form.appendChild(loteObjEl);
+        }
+        try {
+          loteObjEl.value = JSON.stringify(item.lote ?? {});
+        } catch (e) {
+          loteObjEl.value = '{}';
+        }
+        const litrosEl = $form.querySelector('[name="litros"]'); if (litrosEl) litrosEl.value = item.litros ?? '';
+        const estadoEl = $form.querySelector('[name="estado"]'); if (estadoEl) estadoEl.value = item.estado ?? '';
+        const notasEl = $form.querySelector('[name="notas"]'); if (notasEl) notasEl.value = item.notas ?? '';
+  const loteEl = $form.querySelector('[name="lote"]');
+  if (loteEl) loteEl.value = extractLoteNumber(item.lote) || '';
+      }
+      if ($formSection) $formSection.classList.remove('hidden');
+      if ($listSection) $listSection.classList.add('hidden');
+      const title = document.getElementById('form-title'); if (title) title.textContent = 'Editar Registro';
+    } catch (err) {
+      alert('No se pudo cargar registro para editar: ' + err.message);
+    }
   }
 });
 
 if ($form) $form.addEventListener('submit', async (e) => {
-  // Prevenir el envío del formulario por defecto
   e.preventDefault();
-  // Crear un objeto FormData a partir del formulario
   const fd = new FormData($form);
-  // Crear un objeto URLSearchParams a partir del FormData
-  const payload = new URLSearchParams();
-  for (const [k, v] of fd.entries()) payload.append(k, v);
-  // Enviar una solicitud POST al endpoint /add
-  const res = await fetch(API_BASE + '/add', { method: 'POST', body: payload });
-  // Si la respuesta es OK, cerrar el formulario y refrescar la lista
-  if (res.ok) {
-    if ($formSection) $formSection.classList.add('hidden');
-    if ($listSection) $listSection.classList.remove('hidden');
-    load();
+  // Si existe un campo oculto id => actualizar
+  const idEl = document.getElementById('record-id');
+  const id = idEl ? idEl.value : null;
+    if (id) {
+    // Backend espera los parámetros en la cadena de consulta
+    const params = new URLSearchParams();
+    // Recopilar primero los campos del formulario
+    for (const [k, v] of fd.entries()) params.append(k, v);
+    // Manejar lote especialmente: si tenemos lote_obj preservado, actualizar su valor
+    const loteInput = params.get('lote');
+    const loteObjEl = document.getElementById('lote-obj');
+    if (loteObjEl && loteObjEl.value) {
+      try {
+        const obj = JSON.parse(loteObjEl.value);
+        if (loteInput && String(loteInput).trim() !== '') obj.valor = loteInput;
+        params.set('lote', JSON.stringify(obj));
+      } catch (e) {
+        // fallback: si loteInput existe, crear un pequeño objeto lote
+        if (loteInput && String(loteInput).trim() !== '') {
+          const genId = genObjectId();
+          params.set('lote', JSON.stringify({ _id: genId, valor: loteInput }));
+        }
+      }
+    } else {
+      // Objeto no preservado: construir objeto lote a partir de la entrada
+      if (loteInput && String(loteInput).trim() !== '') {
+        const genId = genObjectId();
+        params.set('lote', JSON.stringify({ _id: genId, valor: loteInput }));
+      }
+    }
+    params.append('id', id);
+    const url = API_BASE + '/update_madurador_by_id/?' + params.toString();
+    const res = await fetch(url, { method: 'POST' });
+    if (res.ok) {
+      if ($formSection) $formSection.classList.add('hidden');
+      if ($listSection) $listSection.classList.remove('hidden');
+      if (idEl) idEl.remove();
+      load();
+    } else {
+      const txt = await res.text();
+      alert('Error actualizando: ' + txt);
+    }
   } else {
-    // Si hay un error, mostrar un mensaje de error
-    alert('Error al guardar');
+    // Backend espera parametros en la cadena de consulta como ?litros=..&estado=..&lote=..
+    const params = new URLSearchParams();
+    let loteVal = null;
+    for (const [k, v] of fd.entries()) {
+      if (k === 'lote') loteVal = v;
+      else params.append(k, v);
+    }
+    // Asegurarse de que lote sea una representación de cadena que se pueda analizar mediante literal_eval y contenga _id
+    if (!loteVal || !loteVal.trim()) {
+      const generatedId = genObjectId();
+      loteVal = "{'_id':'" + generatedId + "','nombre':'lote_local'}";
+    } else if (!loteVal.trim().startsWith('{')) {
+      const generatedId = genObjectId();
+      loteVal = "{'_id':'" + generatedId + "','valor':'" + loteVal + "'}";
+    }
+    params.append('lote', loteVal);
+    const urlCreate = API_BASE + '/create_madurador/?' + params.toString();
+    try {
+      const res = await fetch(urlCreate, { method: 'POST' });
+      if (res.ok) {
+        if ($formSection) $formSection.classList.add('hidden');
+        if ($listSection) $listSection.classList.remove('hidden');
+        $form.reset();
+        load();
+      } else {
+        const txt = await res.text();
+        alert('Error guardando: ' + txt);
+      }
+    } catch (err) {
+      alert('Error guardando: ' + err.message);
+    }
   }
 });
 

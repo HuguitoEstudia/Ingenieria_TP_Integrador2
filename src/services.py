@@ -22,7 +22,8 @@ MONGO_PUERTO="27017"
 MONGO_TIEMPO_FUERA=10000
 
 # MONGO_URI="mongodb+srv://db_user_TP_PROMO:R4LvCFtcXtb0I3mQ@cluster0.18gaj25.mongodb.net/TPintegrador2?retryWrites=true&w=majority"
-MONGO_URI = "mongodb://" + MONGO_HOST + ":" + MONGO_PUERTO + "/"
+# MONGO_URI = "mongodb://" + MONGO_HOST + ":" + MONGO_PUERTO + "/"
+MONGO_URI = "mongodb://admin:admin123@localhost:27017"
 
 MONGO_BASEDATOS="TPintegrador2"
 
@@ -292,22 +293,36 @@ def health():
     return {'status': 'ok'}
 
 def _serialize_doc(documento):
-    """Convert ObjectId and dates to JSON-serializable types."""
+    """Convertir ObjectId y fechas a tipos JSON serializables."""
+    # Maneja None, tipos primitivos, ObjectId, date, dict, list recursivamente
     if documento is None:
         return None
-    doc = {}
-    for k, v in documento.items():
-        if isinstance(v, ObjectId):
-            doc[k] = str(v)
-        elif isinstance(v, (date,)):
-            doc[k] = v.isoformat()
-        else:
-            doc[k] = v
-    return doc
+
+    # ObjectId -> string
+    if isinstance(documento, ObjectId):
+        return str(documento)
+
+    # Dates -> ISO string
+    if isinstance(documento, (date,)):
+        return documento.isoformat()
+
+    # Dict: recursar en valores
+    if isinstance(documento, dict):
+        result = {}
+        for k, v in documento.items():
+            result[k] = _serialize_doc(v)
+        return result
+
+    # List/tuple: recursar en elementos
+    if isinstance(documento, (list, tuple)):
+        return [_serialize_doc(v) for v in documento]
+
+    # Fallback: retornar como está (primitivos)
+    return documento
 
 @router.get('/api/records')
 def api_records():
-    # Return a plain list of serialized records for the SPA
+    # Retornar una lista simple de registros serializados para la SPA
     cliente = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=MONGO_TIEMPO_FUERA)
     try:
         baseDatos = cliente[MONGO_BASEDATOS]
@@ -319,8 +334,8 @@ def api_records():
 
 @router.post('/add')
 def add_record(request: dict = None): # type: ignore
-    """Accept form-encoded or JSON payloads with fields litros, estado, notas, lote.
-    This endpoint is compatibility for the static frontend.
+    """Aceptar payloads codificados en formularios o JSON con campos litros, estado, notas, lote.
+    Este endpoint es compatible con el frontend estático.
     """
-    raise HTTPException(status_code=400, detail='Use the backend form endpoint via the frontend app or ensure form fields are sent')
-    
+    raise HTTPException(status_code=400, detail='Use el endpoint de formulario del backend a través de la aplicación frontend o asegúrese de que se envíen los campos del formulario')
+
