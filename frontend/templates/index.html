@@ -4,18 +4,39 @@
   <section>
     <section>
       <button id="refresh">Refrescar registros</button>
-      <button id="open-add">Agregar nuevo</button>
+  <button id="open-add-madurador" class="btn primary">Agregar nuevo Madurador</button>
+    <button id="open-add-lote" class="btn secondary">Agregar nuevo Lote</button>
     </section>
 
     <section id="list">
       <h2>Lista de Registros</h2>
-      <div id="records"></div>
+      <div class="two-cols">
+        <section id="maduradores">
+          <h3>Maduradores</h3>
+          <div id="maduradores-list"></div>
+        </section>
+        <section id="lotes">
+          <h3>Lotes</h3>
+          <div id="lotes-list"></div>
+        </section>
+      </div>
+      <section id="detail" class="hidden">
+        <h3>Detalle</h3>
+        <pre id="detail-content" style="white-space:pre-wrap;word-break:break-word;"></pre>
+        <div class="actions"><button id="close-detail">Cerrar</button></div>
+      </section>
     </section>
 
     <section id="form" class="hidden">
       <h2 id="form-title">Agregar Registro</h2>
       <form id="record-form">
         <input type="hidden" id="record-id" name="id" value="">
+        <!-- Hidden field used to preserve lote object when editing -->
+        <input type="hidden" id="lote-obj" name="lote_obj" value="">
+        <!-- When creating a madurador we will show a select of existing lotes here (populated by JS) -->
+        <label id="lote-select-label" class="hidden">Seleccionar Lote
+          <select id="lote-select"></select>
+        </label>
         <label>Litros <input name="litros" type="number" required></label>
         <label>Estado 
             <select name="estado" required>
@@ -28,10 +49,36 @@
             </select>
         </label>
         <label>Notas <input name="notas"></label>
-        <label>Lote <input name="lote" type="number"></label>
+        <!-- Hidden: lote is set via select, not manual input -->
+        <input name="lote" type="hidden">
         <div class="actions">
           <button type="submit">Guardar</button>
           <button type="button" id="cancel">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Lote form (separate) -->
+    <section id="lote-form" class="hidden">
+      <h2 id="lote-form-title">Agregar nuevo Lote</h2>
+      <form id="lote-record-form">
+        <label>Cerveza <input name="cerveza" type="text" required></label>
+        <label>Estado 
+            <select name="estado" required>
+                <option value="activo">Activo</option>
+                <option value="cargado">Cargado</option>
+                <option value="sucio">Sucio</option>
+                <option value="mantenimiento">Mantenimiento</option>
+                <option value="inactivo">Inactivo</option>
+            </select>
+        </label>
+        <label>Cantidad Litros <input name="cantidadLitros" type="number" required></label>
+        <label>Fecha Carga <input name="fechaCarga" type="date" required></label>
+        <label>Fecha Vencimiento <input name="fechaVencimiento" type="date" required></label>
+        <label>Notas <input name="notas"></label>
+        <div class="actions">
+          <button type="submit">Guardar Lote</button>
+          <button type="button" id="cancel-lote">Cancelar</button>
         </div>
       </form>
     </section>

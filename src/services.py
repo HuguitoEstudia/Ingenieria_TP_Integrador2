@@ -21,9 +21,9 @@ MONGO_HOST="localhost"
 MONGO_PUERTO="27017"
 MONGO_TIEMPO_FUERA=10000
 
-# MONGO_URI="mongodb+srv://db_user_TP_PROMO:R4LvCFtcXtb0I3mQ@cluster0.18gaj25.mongodb.net/TPintegrador2?retryWrites=true&w=majority"
-MONGO_URI = "mongodb://" + MONGO_HOST + ":" + MONGO_PUERTO + "/"
-# MONGO_URI = "mongodb://admin:admin123@localhost:27017"
+# MONGO_URI="mongodb+srv://Elias:crud123@cluster0.ggcpank.mongodb.net/?appName=Cluster0"
+# MONGO_URI = "mongodb://" + MONGO_HOST + ":" + MONGO_PUERTO + "/"
+MONGO_URI = "mongodb://admin:admin123@localhost:27017"
 
 MONGO_BASEDATOS="TPintegrador2"
 
@@ -130,7 +130,7 @@ def find_all_madurador():
 
     cliente.close()
 
-    return str(Response(lista).toDict())
+    return Response(lista).toDict()
 
 
 @router.get("/find_madurador_by_id/", tags=["madurador"])
@@ -149,7 +149,7 @@ def find_madurador_by_id(id:str):
 
     cliente.close()
 
-    return str(Response(_serialize_doc(documentos)).toDict())
+    return Response(_serialize_doc(documentos)).toDict()
 
 
 
@@ -255,7 +255,7 @@ def find_all_lote():
 
     cliente.close()
 
-    return str(Response(lista).toDict())
+    return Response(lista).toDict()
 
 
 @router.get("/find_lote_by_id/", tags=["lote"])
@@ -274,7 +274,7 @@ def find_lote_by_id(id:str):
 
     cliente.close()
 
-    return str(Response(_serialize_doc(documentos)).toDict())
+    return Response(_serialize_doc(documentos)).toDict()
 
 
 

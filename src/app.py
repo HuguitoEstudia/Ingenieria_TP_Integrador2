@@ -15,7 +15,7 @@ app.add_middleware(
 )
 
 # Importe services.router aquí (después de crear `app`) para evitar la importación circular durante la importación del módulo
-from services import router as services_router
+from .services import router as services_router
 app.include_router(services_router)
 
 if __name__ == "__main__":
