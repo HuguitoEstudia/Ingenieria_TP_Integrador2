@@ -818,12 +818,20 @@ function filterMaduradores(searchTerm) {
     return;
   }
   const term = searchTerm.toLowerCase();
-  const filtered = allMaduradores.filter(m => {
+  const filtered = allMaduradores.filter((m, idx) => {
+    const maduradorNum = String(idx + 1); // Madurador #1, #2, etc.
     const litros = String(m.litros || '').toLowerCase();
     const estado = String(m.estado || '').toLowerCase();
     const notas = String(m.notas || '').toLowerCase();
     const loteStr = formatLoteDisplay(m.lote).toLowerCase();
-    return litros.includes(term) || estado.includes(term) || notas.includes(term) || loteStr.includes(term);
+    
+    // Check if searching for "madurador 1", "mad 1", "#1", etc.
+    const maduradorMatch = term.match(/(?:mad(?:urador)?|#)\s*(\d+)/i);
+    if (maduradorMatch && maduradorMatch[1] === maduradorNum) {
+      return true;
+    }
+    
+    return maduradorNum.includes(term) || litros.includes(term) || estado.includes(term) || notas.includes(term) || loteStr.includes(term);
   });
   renderMaduradores(filtered);
 }
