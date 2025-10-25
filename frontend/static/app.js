@@ -260,9 +260,12 @@ function renderLotes(items) {
       <div class="card-header">${title}</div>
       <div class="card-body">
         <div class="record-grid">
-          <div class="field"><span class="label">Cantidad:</span><span class="value">${escapeHTML(it.cantidadLitros ?? '--')}</span></div>
+          <div class="field"><span class="label">Cerveza:</span><span class="value">${escapeHTML(it.cerveza ?? '--')}</span></div>
           <div class="field"><span class="label">Estado:</span><span class="value">${escapeHTML(it.estado ?? '')}</span></div>
+          <div class="field"><span class="label">Cantidad (Lts):</span><span class="value">${escapeHTML(it.cantidadLitros ?? '--')}</span></div>
           <div class="field"><span class="label">Carga:</span><span class="value">${escapeHTML(it.fechaCarga ?? '')}</span></div>
+          <div class="field"><span class="label">Vencimiento:</span><span class="value">${escapeHTML(it.fechaVencimiento ?? '')}</span></div>
+          <div class="field"><span class="label">Notas:</span><span class="value">${escapeHTML(it.notas ?? '--')}</span></div>
         </div>
       </div>
       <div class="card-actions">
