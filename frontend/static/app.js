@@ -27,9 +27,14 @@ const $loteObjInput = document.getElementById('lote-obj');
 const $loteFormSection = document.getElementById('lote-form');
 const $loteForm = document.getElementById('lote-record-form');
 const $cancelLote = document.getElementById('cancel-lote');
+const $searchMaduradores = document.getElementById('search-maduradores');
+const $searchLotes = document.getElementById('search-lotes');
 
 // Global cache for lotes to map them with auto-incremental IDs
 let cachedLotes = [];
+// Global cache for all data to enable client-side filtering
+let allMaduradores = [];
+let allLotes = [];
 
 /**
  * Verificar el estado de la conexión con el backend
@@ -139,6 +144,7 @@ async function loadMaduradores() {
       return;
     }
     const items = extractDataArray(parsed);
+    allMaduradores = items; // Cache for filtering
     console.debug('loadMaduradores: received', items?.length ?? 0, 'items', items);
     renderMaduradores(items);
   } catch (e) {
@@ -161,6 +167,7 @@ async function loadLotes() {
     }
     const items = extractDataArray(parsed);
     cachedLotes = items; // Cache lotes for madurador display
+    allLotes = items; // Cache for filtering
     console.debug('loadLotes: received', items?.length ?? 0, 'items', items);
     renderLotes(items);
   } catch (e) {
@@ -803,3 +810,50 @@ document.addEventListener('click', async (e) => {
     }
   }
 });
+
+// Search/Filter functionality
+function filterMaduradores(searchTerm) {
+  if (!searchTerm || searchTerm.trim() === '') {
+    renderMaduradores(allMaduradores);
+    return;
+  }
+  const term = searchTerm.toLowerCase();
+  const filtered = allMaduradores.filter(m => {
+    const litros = String(m.litros || '').toLowerCase();
+    const estado = String(m.estado || '').toLowerCase();
+    const notas = String(m.notas || '').toLowerCase();
+    const loteStr = formatLoteDisplay(m.lote).toLowerCase();
+    return litros.includes(term) || estado.includes(term) || notas.includes(term) || loteStr.includes(term);
+  });
+  renderMaduradores(filtered);
+}
+
+function filterLotes(searchTerm) {
+  if (!searchTerm || searchTerm.trim() === '') {
+    renderLotes(allLotes);
+    return;
+  }
+  const term = searchTerm.toLowerCase();
+  const filtered = allLotes.filter(l => {
+    const cerveza = String(l.cerveza || '').toLowerCase();
+    const estado = String(l.estado || '').toLowerCase();
+    const cantidad = String(l.cantidadLitros || '').toLowerCase();
+    const notas = String(l.notas || '').toLowerCase();
+    const fechaCarga = String(l.fechaCarga || '').toLowerCase();
+    return cerveza.includes(term) || estado.includes(term) || cantidad.includes(term) || notas.includes(term) || fechaCarga.includes(term);
+  });
+  renderLotes(filtered);
+}
+
+// Attach search event listeners
+if ($searchMaduradores) {
+  $searchMaduradores.addEventListener('input', (e) => {
+    filterMaduradores(e.target.value);
+  });
+}
+
+if ($searchLotes) {
+  $searchLotes.addEventListener('input', (e) => {
+    filterLotes(e.target.value);
+  });
+}
