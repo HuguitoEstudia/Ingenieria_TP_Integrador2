@@ -113,6 +113,7 @@ def delete_madurador_by_id(id:str):
 
 
 @router.get("/find_all_madurador/", tags=["madurador"])
+#Usado por: loadMaduradores() — carga la lista de maduradores para renderizar las tarjetas.
 def find_all_madurador():
 
     #Defino el string de Conexion
@@ -135,6 +136,7 @@ def find_all_madurador():
 
 
 @router.get("/find_madurador_by_id/", tags=["madurador"])
+# Usado por: handler “Ver” / “Editar” de maduradores — obtiene un madurador por id para mostrar detalle o prefills del formulario.
 def find_madurador_by_id(id:str):
 
     objid=ObjectId(id)
@@ -238,6 +240,7 @@ def delete_lote_by_id(id:str):
 
 
 @router.get("/find_all_lote/", tags=["lote"])
+#Usado por: loadLotes() — carga la lista de lotes (y llena el select en "Agregar nuevo Madurador").
 def find_all_lote():
 
     #Defino el string de Conexion
@@ -260,6 +263,7 @@ def find_all_lote():
 
 
 @router.get("/find_lote_by_id/", tags=["lote"])
+#Usado por: handler “Ver” / “Editar” de lotes — obtiene un lote por id para mostrar detalle o prefills del formulario.
 def find_lote_by_id(id:str):
 
     objid=ObjectId(id)
