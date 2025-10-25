@@ -22,9 +22,9 @@ MONGO_PUERTO="27017"
 MONGO_TIEMPO_FUERA=10000
 
 # MONGO_URI="mongodb+srv://db_user_TP_PROMO:R4LvCFtcXtb0I3mQ@cluster0.18gaj25.mongodb.net/TPintegrador2?retryWrites=true&w=majority"
-MONGO_URI = "mongodb://" + MONGO_HOST + ":" + MONGO_PUERTO + "/"
-# MONGO_URI = "mongodb://admin:admin123@localhost:27017"
-# MONGO_URI = "mongodb+srv://Elias:<crud123>@cluster0.ggcpank.mongodb.net/?appName=Cluster0"
+# MONGO_URI = "mongodb://" + MONGO_HOST + ":" + MONGO_PUERTO + "/"
+MONGO_URI = "mongodb://admin:admin123@localhost:27017"
+# MONGO_URI = "mongodb+srv://Elias:crud123@cluster0.ggcpank.mongodb.net/?appName=Cluster0"
 
 MONGO_BASEDATOS="TPintegrador2"
 

@@ -260,6 +260,7 @@ function renderLotes(items) {
       </div>
       <div class="card-actions">
         <button data-id="${it._id}" class="view-l">Ver</button>
+        <button data-id="${it._id}" class="edit-l">Editar</button>
         <button data-id="${it._id}" class="del-l secondary">Eliminar</button>
       </div>
     `;
@@ -351,7 +352,11 @@ if ($openAddMadurador) $openAddMadurador.addEventListener('click', async () => {
       if (first) {
         const obj = JSON.parse(first.dataset.lote);
         if ($loteObjInput) $loteObjInput.value = JSON.stringify(obj);
-        const loteHidden = $form.querySelector('[name="lote"]'); if (loteHidden) loteHidden.value = "{'_id':'" + (obj._id || '') + "','valor':'" + (obj.valor || obj.nombre || '') + "'}";
+        const loteHidden = $form.querySelector('[name="lote"]');
+        if (loteHidden) {
+          // Send complete lote object as Python dict string
+          loteHidden.value = JSON.stringify(obj).replace(/"/g, "'");
+        }
       }
     } else {
       if ($loteSelectLabel) $loteSelectLabel.classList.add('hidden');
@@ -368,7 +373,10 @@ if ($loteSelect) $loteSelect.addEventListener('change', (e) => {
   const obj = JSON.parse(opt.dataset.lote || '{}');
   if ($loteObjInput) $loteObjInput.value = JSON.stringify(obj);
   const loteHidden = $form.querySelector('[name="lote"]');
-  if (loteHidden) loteHidden.value = "{'_id':'" + (obj._id || '') + "','valor':'" + (obj.valor || obj.nombre || '') + "'}";
+  if (loteHidden) {
+    // Send complete lote object as Python dict string
+    loteHidden.value = JSON.stringify(obj).replace(/"/g, "'");
+  }
 });
 // Open lote form
 if ($openAddLote) $openAddLote.addEventListener('click', () => {
@@ -537,6 +545,40 @@ if ($lotesList) $lotesList.addEventListener('click', async (e) => {
     }
     return;
   }
+  // edit lote
+  if (btn.classList.contains('edit-l')) {
+    try {
+      const res = await fetch(API_BASE + '/find_lote_by_id/?' + new URLSearchParams({ id }).toString());
+      if (!res.ok) throw new Error('error al obtener lote');
+      const parsed = await parseResponseFlexible(res);
+      const item = extractDataObject(parsed);
+      if (!item) throw new Error('lote no encontrado');
+      // Rellenar formulario de lote con los valores
+      if ($loteForm) {
+        let idEl = document.getElementById('lote-id');
+        if (!idEl) {
+          idEl = document.createElement('input');
+          idEl.type = 'hidden';
+          idEl.id = 'lote-id';
+          idEl.name = 'id';
+          $loteForm.appendChild(idEl);
+        }
+        idEl.value = item._id || '';
+        const cervezaEl = $loteForm.querySelector('[name="cerveza"]'); if (cervezaEl) cervezaEl.value = item.cerveza ?? '';
+        const estadoEl = $loteForm.querySelector('[name="estado"]'); if (estadoEl) estadoEl.value = item.estado ?? '';
+        const cantidadEl = $loteForm.querySelector('[name="cantidadLitros"]'); if (cantidadEl) cantidadEl.value = item.cantidadLitros ?? '';
+        const fechaCargaEl = $loteForm.querySelector('[name="fechaCarga"]'); if (fechaCargaEl) fechaCargaEl.value = item.fechaCarga ?? '';
+        const fechaVencEl = $loteForm.querySelector('[name="fechaVencimiento"]'); if (fechaVencEl) fechaVencEl.value = item.fechaVencimiento ?? '';
+        const notasEl = $loteForm.querySelector('[name="notas"]'); if (notasEl) notasEl.value = item.notas ?? '';
+      }
+      if ($loteFormSection) $loteFormSection.classList.remove('hidden');
+      if ($listSection) $listSection.classList.add('hidden');
+      const title = document.getElementById('lote-form-title'); if (title) title.textContent = 'Editar Lote';
+    } catch (err) {
+      alert('No se pudo cargar lote para editar: ' + err.message);
+    }
+    return;
+  }
 });
 
 if ($form) $form.addEventListener('submit', async (e) => {
@@ -592,16 +634,19 @@ if ($form) $form.addEventListener('submit', async (e) => {
       if (k === 'lote') loteVal = v;
       else params.append(k, v);
     }
-    // Asegurarse de que lote sea una representación de cadena que se pueda analizar mediante literal_eval y contenga _id
+    console.debug('Creating madurador - loteVal from form:', loteVal);
+    // loteVal should already be a Python dict string from the selector (e.g., "{'_id':'...','cerveza':'Rubia',...}")
+    // If empty or invalid, generate a minimal one
     if (!loteVal || !loteVal.trim()) {
       const generatedId = genObjectId();
       loteVal = "{'_id':'" + generatedId + "','nombre':'lote_local'}";
-    } else if (!loteVal.trim().startsWith('{')) {
-      const generatedId = genObjectId();
-      loteVal = "{'_id':'" + generatedId + "','valor':'" + loteVal + "'}";
+      console.warn('No lote selected, using generated:', loteVal);
     }
+    // loteVal is already formatted as Python dict, use it directly
+    console.debug('Final loteVal to send:', loteVal);
     params.append('lote', loteVal);
     const urlCreate = API_BASE + '/create_madurador/?' + params.toString();
+    console.debug('Create URL:', urlCreate);
     try {
       const res = await fetch(urlCreate, { method: 'POST' });
       if (res.ok) {
