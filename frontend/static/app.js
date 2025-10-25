@@ -8,7 +8,7 @@ if (apiUrlEl) apiUrlEl.textContent = API_BASE;
 
 // Elementos del DOM
 const $status = document.getElementById('status'); // Estado de la conexión con el backend
-const $records = document.getElementById('records'); // legacy placeholder (may be null)
+const $records = document.getElementById('records'); // marcador de posición heredado (puede ser null)
 const $maduradoresList = document.getElementById('maduradores-list');
 const $lotesList = document.getElementById('lotes-list');
 const $detail = document.getElementById('detail');
@@ -30,9 +30,9 @@ const $cancelLote = document.getElementById('cancel-lote');
 const $searchMaduradores = document.getElementById('search-maduradores');
 const $searchLotes = document.getElementById('search-lotes');
 
-// Global cache for lotes to map them with auto-incremental IDs
+// Cache global para lotes para mapearlos con IDs auto-incrementales
 let cachedLotes = [];
-// Global cache for all data to enable client-side filtering
+// Cache global para todos los datos para habilitar filtrado del lado del cliente
 let allMaduradores = [];
 let allLotes = [];
 
@@ -58,12 +58,12 @@ async function health() {
 /**
  * Cargar la lista de registros desde el backend
  */
-// Utility: try to parse JSON, fallback to text->single-quote->JSON
+// Utilidad: intentar parsear JSON, fallback a texto->comillas simples->JSON
 async function parseResponseFlexible(res) {
-  // Try JSON first, otherwise read text once and attempt to parse Python-style dicts
+  // Intentar JSON primero, de lo contrario leer texto una vez e intentar parsear dicts estilo Python
   try {
     const json = await res.json();
-    console.debug('✓ Parsed as JSON:', json);
+    console.debug('✓ Parseado como JSON:', json);
     return json;
   } catch (err) {
     console.debug('✗ Not JSON, reading as text...');
@@ -77,21 +77,21 @@ async function parseResponseFlexible(res) {
       console.debug('✓ Parsed as JSON from text:', parsed);
       return parsed;
     } catch (err2) {
-      console.debug('✗ JSON.parse failed:', err2.message);
-      // Python dict to JSON conversion
+      console.debug('✗ JSON.parse falló:', err2.message);
+      // Conversión de dict Python a JSON
       try {
-        // Use Function constructor to evaluate Python-like dict as JavaScript object
-        // This is safe because we control the backend
+        // Usar constructor Function para evaluar dict estilo Python como objeto JavaScript
+        // Esto es seguro porque controlamos el backend
         const cleaned = txt
           .replace(/None/g, 'null')
           .replace(/True/g, 'true')
           .replace(/False/g, 'false');
         
-        console.debug('Attempting Function constructor with cleaned text...');
+        console.debug('Intentando constructor Function con texto limpio...');
         
-        // Use Function constructor (safer than eval)
+        // Usar constructor Function (más seguro que eval)
         const result = new Function(`'use strict'; return (${cleaned})`)();
-        console.debug('✓ Parsed Python dict successfully:', result);
+        console.debug('✓ Dict Python parseado exitosamente:', result);
         return result;
       } catch (err3) {
         console.error('✗ Function constructor failed:', err3.message);
@@ -119,7 +119,7 @@ function extractDataArray(parsed) {
 }
 
 function extractDataObject(parsed) {
-  // For single-object responses
+  // Para respuestas de objeto único
   if (parsed && parsed.data) {
     return parsed.data;
   }
@@ -127,7 +127,7 @@ function extractDataObject(parsed) {
 }
 
 async function load() {
-  // load both maduradores and lotes
+  // cargar tanto maduradores como lotes
   await Promise.all([loadMaduradores(), loadLotes()]);
 }
 
@@ -144,8 +144,8 @@ async function loadMaduradores() {
       return;
     }
     const items = extractDataArray(parsed);
-    allMaduradores = items; // Cache for filtering
-    console.debug('loadMaduradores: received', items?.length ?? 0, 'items', items);
+    allMaduradores = items; // Cache para filtrado
+    console.debug('loadMaduradores: recibido', items?.length ?? 0, 'items', items);
     renderMaduradores(items);
   } catch (e) {
     console.error('loadMaduradores error:', e);
@@ -166,9 +166,9 @@ async function loadLotes() {
       return;
     }
     const items = extractDataArray(parsed);
-    cachedLotes = items; // Cache lotes for madurador display
-    allLotes = items; // Cache for filtering
-    console.debug('loadLotes: received', items?.length ?? 0, 'items', items);
+    cachedLotes = items; // Cache de lotes para mostrar en madurador
+    allLotes = items; // Cache para filtrado
+    console.debug('loadLotes: recibido', items?.length ?? 0, 'items', items);
     renderLotes(items);
   } catch (e) {
     console.error('loadLotes error:', e);
@@ -176,11 +176,11 @@ async function loadLotes() {
   }
 }
 
-// Helper to format lote display as "Lote #X - Cerveza"
+// Ayudante para formatear visualización de lote como "Lote #X - Cerveza"
 function formatLoteDisplay(lote) {
   if (!lote) return '--';
   
-  // Handle if lote is a string (shouldn't happen but just in case)
+  // Manejar si lote es un string (no debería pasar pero por si acaso)
   if (typeof lote === 'string') {
     try {
       lote = JSON.parse(lote.replace(/'/g, '"'));
@@ -193,7 +193,7 @@ function formatLoteDisplay(lote) {
   
   const cerveza = lote.cerveza || lote.nombre || 'Sin nombre';
   
-  // Try to find the lote index in cachedLotes by matching _id
+  // Intentar encontrar el índice del lote en cachedLotes comparando _id
   if (cachedLotes && cachedLotes.length > 0 && lote._id) {
     const idx = cachedLotes.findIndex(l => l._id === lote._id);
     if (idx !== -1) {
@@ -201,12 +201,12 @@ function formatLoteDisplay(lote) {
     }
   }
   
-  // Fallback: use valor if exists
+  // Fallback: usar valor si existe
   if (lote.valor) {
     return `Lote #${lote.valor} - ${cerveza}`;
   }
   
-  // Last fallback: just cerveza
+  // Último fallback: solo cerveza
   return cerveza;
 }
 
@@ -310,22 +310,22 @@ function extractLoteNumber(lote) {
     }
     return JSON.stringify(lote);
   }
-  // string
+  // cadena de texto
   const m = String(lote).match(/\d+/);
   return m ? m[0] : String(lote);
 }
 
 // Eventos
 if ($refresh) $refresh.addEventListener('click', () => load()); // Refrescar la lista al hacer clic en el botón
-// The old single 'open-add' button was removed; use 'open-add-madurador' to open the madurador form.
-// New: open madurador form - populate lote select
+// El antiguo botón único 'open-add' fue eliminado; usar 'open-add-madurador' para abrir el formulario de madurador.
+// Nuevo: abrir formulario de madurador - poblar selector de lote
 if ($openAddMadurador) $openAddMadurador.addEventListener('click', async () => {
   if ($form) $form.reset();
   if ($listSection) $listSection.classList.add('hidden');
   if ($loteFormSection) $loteFormSection.classList.add('hidden');
   if ($formSection) $formSection.classList.remove('hidden');
   const title = document.getElementById('form-title'); if (title) title.textContent = 'Agregar nuevo Madurador';
-  // fetch lotes
+  // obtener lotes
   try {
     const res = await fetch(API_BASE + '/find_all_lote/');
     if (!res.ok) {
@@ -335,36 +335,36 @@ if ($openAddMadurador) $openAddMadurador.addEventListener('click', async () => {
       return;
     }
     const parsed = await parseResponseFlexible(res);
-    console.debug('open-add-madurador: lotes response', parsed);
-    // If parsed is a string it likely contains an error from the backend -> show in console and hide select
+    console.debug('open-add-madurador: respuesta de lotes', parsed);
+    // Si parsed es un string probablemente contiene un error del backend -> mostrar en consola y ocultar selector
     if (typeof parsed === 'string') {
       console.warn('find_all_lote responded with text:', parsed);
       if ($loteSelectLabel) $loteSelectLabel.classList.add('hidden');
       return;
     }
     const list = extractDataArray(parsed);
-    console.debug('open-add-madurador: extracted lotes', list.length, list);
-    // populate select
+    console.debug('open-add-madurador: lotes extraídos', list.length, list);
+    // poblar selector
     if ($loteSelect) $loteSelect.innerHTML = '';
     if (list.length > 0) {
       list.forEach((l, idx) => {
         const opt = document.createElement('option');
         opt.value = idx;
-        const loteId = idx + 1; // Auto-incremental ID starting from 1
+        const loteId = idx + 1; // ID auto-incremental comenzando desde 1
         const cerveza = l.cerveza || l.nombre || 'Sin nombre';
         opt.textContent = `Lote #${loteId} - ${cerveza}`;
         opt.dataset.lote = JSON.stringify(l);
         $loteSelect.appendChild(opt);
       });
       $loteSelectLabel.classList.remove('hidden');
-      // set hidden lote input based on first option
+      // establecer input oculto de lote basado en primera opción
       const first = $loteSelect.options[0];
       if (first) {
         const obj = JSON.parse(first.dataset.lote);
         if ($loteObjInput) $loteObjInput.value = JSON.stringify(obj);
         const loteHidden = $form.querySelector('[name="lote"]');
         if (loteHidden) {
-          // Send complete lote object as Python dict string
+          // Enviar objeto lote completo como string de dict Python
           loteHidden.value = JSON.stringify(obj).replace(/"/g, "'");
         }
       }
@@ -376,7 +376,7 @@ if ($openAddMadurador) $openAddMadurador.addEventListener('click', async () => {
     if ($loteSelectLabel) $loteSelectLabel.classList.add('hidden');
   }
 });
-// when selecting a lote, update hidden lote input
+// al seleccionar un lote, actualizar input oculto de lote
 if ($loteSelect) $loteSelect.addEventListener('change', (e) => {
   const opt = $loteSelect.options[$loteSelect.selectedIndex];
   if (!opt) return;
@@ -384,33 +384,33 @@ if ($loteSelect) $loteSelect.addEventListener('change', (e) => {
   if ($loteObjInput) $loteObjInput.value = JSON.stringify(obj);
   const loteHidden = $form.querySelector('[name="lote"]');
   if (loteHidden) {
-    // Send complete lote object as Python dict string
+    // Enviar objeto lote completo como string de dict Python
     loteHidden.value = JSON.stringify(obj).replace(/"/g, "'");
   }
 });
-// Open lote form
+// Abrir formulario de lote
 if ($openAddLote) $openAddLote.addEventListener('click', () => {
   if ($formSection) $formSection.classList.add('hidden');
   if ($loteFormSection) $loteFormSection.classList.remove('hidden');
   if ($listSection) $listSection.classList.add('hidden');
   if ($loteForm) $loteForm.reset();
 });
-// cancel lote form
+// cancelar formulario de lote
 if ($cancelLote) $cancelLote.addEventListener('click', () => {
   if ($loteFormSection) $loteFormSection.classList.add('hidden');
   if ($listSection) $listSection.classList.remove('hidden');
 });
-// Submit lote form -> create_lote endpoint
+// Enviar formulario de lote -> endpoint create_lote
 if ($loteForm) $loteForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData($loteForm);
-  // If there's a hidden id field (lote-id) -> update, otherwise create
+  // Si hay un campo id oculto (lote-id) -> actualizar, de lo contrario crear
   const idEl = document.getElementById('lote-id');
   if (idEl && idEl.value) {
     const id = idEl.value;
     const params = new URLSearchParams();
     for (const [k, v] of fd.entries()) {
-      if (k === 'id') continue; // skip id field
+      if (k === 'id') continue; // saltar campo id
       params.append(k, v);
     }
     params.append('id', id);
@@ -440,7 +440,7 @@ if ($loteForm) $loteForm.addEventListener('submit', async (e) => {
         if ($loteFormSection) $loteFormSection.classList.add('hidden');
         if ($listSection) $listSection.classList.remove('hidden');
         $loteForm.reset();
-        // after creating a lote, refresh the madurador list and also refresh lote select when opening form next time
+        // después de crear un lote, refrescar la lista de maduradores y también refrescar el selector de lote al abrir el formulario la próxima vez
         await load();
       } else {
         const txt = await res.text();
@@ -457,14 +457,14 @@ if ($cancel) $cancel.addEventListener('click', () => {
   if ($listSection) $listSection.classList.remove('hidden');
 });
 
-// Delegated handlers for maduradores list
+// Manejadores delegados para lista de maduradores
 if ($maduradoresList) $maduradoresList.addEventListener('click', async (e) => {
   const btn = e.target.closest('button');
   console.debug('maduradores click', { target: e.target, button: btn });
   if (!btn) return;
   const id = btn.dataset.id;
   if (!id) return;
-  // delete madurador
+  // eliminar madurador
   if (btn.classList.contains('del')) {
     if (!confirm('Confirmar eliminación')) return;
     const urlDel = API_BASE + '/delete_madurador_by_id/?' + new URLSearchParams({ id }).toString();
@@ -472,7 +472,7 @@ if ($maduradoresList) $maduradoresList.addEventListener('click', async (e) => {
     await load();
     return;
   }
-  // view madurador by id
+  // ver madurador por id
   if (btn.classList.contains('view-m')) {
     try {
       const res = await fetch(API_BASE + '/find_madurador_by_id/?' + new URLSearchParams({ id }).toString());
@@ -485,7 +485,7 @@ if ($maduradoresList) $maduradoresList.addEventListener('click', async (e) => {
     }
     return;
   }
-  // edit madurador
+  // editar madurador
   if (btn.classList.contains('edit')) {
     try {
       const res = await fetch(API_BASE + '/find_madurador_by_id/?' + new URLSearchParams({ id }).toString());
@@ -504,7 +504,7 @@ if ($maduradoresList) $maduradoresList.addEventListener('click', async (e) => {
           $form.appendChild(idEl);
         }
         idEl.value = item._id || '';
-        // Preservar lote object
+        // Preservar objeto lote
         let loteObjEl = document.getElementById('lote-obj');
         if (!loteObjEl) {
           loteObjEl = document.createElement('input');
@@ -529,7 +529,7 @@ if ($maduradoresList) $maduradoresList.addEventListener('click', async (e) => {
   }
 });
 
-// Delegated handlers for lotes list
+// Manejadores delegados para lista de lotes
 if ($lotesList) $lotesList.addEventListener('click', async (e) => {
   const btn = e.target.closest('button');
   console.debug('lotes click', { target: e.target, button: btn });
@@ -555,7 +555,7 @@ if ($lotesList) $lotesList.addEventListener('click', async (e) => {
     }
     return;
   }
-  // edit lote
+  // editar lote
   if (btn.classList.contains('edit-l')) {
     try {
       const res = await fetch(API_BASE + '/find_lote_by_id/?' + new URLSearchParams({ id }).toString());
@@ -644,16 +644,16 @@ if ($form) $form.addEventListener('submit', async (e) => {
       if (k === 'lote') loteVal = v;
       else params.append(k, v);
     }
-    console.debug('Creating madurador - loteVal from form:', loteVal);
-    // loteVal should already be a Python dict string from the selector (e.g., "{'_id':'...','cerveza':'Rubia',...}")
-    // If empty or invalid, generate a minimal one
+    console.debug('Creando madurador - loteVal del formulario:', loteVal);
+    // loteVal ya debería ser un string de dict Python del selector (ej., "{'_id':'...','cerveza':'Rubia',...}")
+    // Si está vacío o inválido, generar uno mínimo
     if (!loteVal || !loteVal.trim()) {
       const generatedId = genObjectId();
       loteVal = "{'_id':'" + generatedId + "','nombre':'lote_local'}";
-      console.warn('No lote selected, using generated:', loteVal);
+      console.warn('No se seleccionó lote, usando generado:', loteVal);
     }
-    // loteVal is already formatted as Python dict, use it directly
-    console.debug('Final loteVal to send:', loteVal);
+    // loteVal ya está formateado como dict Python, usarlo directamente
+    console.debug('loteVal final a enviar:', loteVal);
     params.append('lote', loteVal);
     const urlCreate = API_BASE + '/create_madurador/?' + params.toString();
     console.debug('Create URL:', urlCreate);
@@ -680,14 +680,14 @@ load();
 // Verificar el estado de la conexión con el backend cada 15 segundos
 setInterval(health, 15000);
 
-// Close detail
+// Cerrar detalle
 if ($closeDetail) $closeDetail.addEventListener('click', () => {
   if ($detail) $detail.classList.add('hidden');
 });
 
 /**
- * Render a human-friendly detail panel for madurador or lote
- * type: 'madurador' | 'lote' | null (auto-detect)
+ * Renderizar un panel de detalle amigable para madurador o lote
+ * type: 'madurador' | 'lote' | null (auto-detectar)
  */
 function renderDetail(data, type = null) {
   if (!$detail || !$detailContent) return;
@@ -696,25 +696,25 @@ function renderDetail(data, type = null) {
     $detail.classList.remove('hidden');
     return;
   }
-  // If data is a raw text error, show it in pre
+  // Si data es un error de texto crudo, mostrarlo en pre
   if (typeof data === 'string') {
     $detailContent.textContent = data;
     $detail.classList.remove('hidden');
     return;
   }
-  // Determine type if not provided
+  // Determinar tipo si no se proporcionó
   if (!type) {
     if (data.litros !== undefined) type = 'madurador';
     else if (data.cerveza !== undefined || data.cantidadLitros !== undefined) type = 'lote';
   }
-  // Build HTML
+  // Construir HTML
   const parts = [];
   if (type === 'madurador') {
     parts.push(`<div class="detail-row"><strong>_id:</strong> ${escapeHTML(data._id ?? '')}</div>`);
     parts.push(`<div class="detail-row"><strong>Litros:</strong> ${escapeHTML(data.litros ?? '')}</div>`);
     parts.push(`<div class="detail-row"><strong>Estado:</strong> ${escapeHTML(data.estado ?? '')}</div>`);
     parts.push(`<div class="detail-row"><strong>Notas:</strong> ${escapeHTML(data.notas ?? '')}</div>`);
-    // lote summary
+    // resumen de lote
     if (data.lote) {
       const loteNum = extractLoteNumber(data.lote);
       parts.push(`<div class="detail-row"><strong>Lote:</strong> ${escapeHTML(loteNum ?? JSON.stringify(data.lote))}</div>`);
@@ -730,7 +730,7 @@ function renderDetail(data, type = null) {
     parts.push(`<div class="detail-row"><strong>Notas:</strong> ${escapeHTML(data.notas ?? '')}</div>`);
     parts.push(`<div class="detail-actions"><button id="detail-edit" data-type="lote" data-id="${data._id}">Editar</button> <button id="detail-delete" data-type="lote" data-id="${data._id}" class="secondary">Eliminar</button></div>`);
   } else {
-    // generic fallback
+    // fallback genérico
     $detailContent.textContent = JSON.stringify(data, null, 2);
     $detail.classList.remove('hidden');
     return;
@@ -740,7 +740,7 @@ function renderDetail(data, type = null) {
   $detail.classList.remove('hidden');
 }
 
-// Handle clicks on detail actions (edit / delete)
+// Manejar clicks en acciones de detalle (editar / eliminar)
 document.addEventListener('click', async (e) => {
   const target = e.target;
   if (!target) return;
@@ -765,12 +765,12 @@ document.addEventListener('click', async (e) => {
     const type = target.dataset.type;
     try {
       if (type === 'madurador') {
-        // reuse edit flow: fetch item and populate madurador form
+        // reutilizar flujo de edición: obtener item y poblar formulario de madurador
         const res = await fetch(API_BASE + '/find_madurador_by_id/?' + new URLSearchParams({ id }).toString());
         const parsed = await parseResponseFlexible(res);
         const item = extractDataObject(parsed);
         if (!item) throw new Error('registro no encontrado');
-        // populate madurador form
+        // poblar formulario de madurador
         if ($form) {
           let idEl = document.getElementById('record-id');
           if (!idEl) { idEl = document.createElement('input'); idEl.type='hidden'; idEl.id='record-id'; idEl.name='id'; $form.appendChild(idEl); }
@@ -787,13 +787,13 @@ document.addEventListener('click', async (e) => {
         if ($listSection) $listSection.classList.add('hidden');
         const title = document.getElementById('form-title'); if (title) title.textContent = 'Editar Registro';
       } else if (type === 'lote') {
-        // fetch lote and populate lote form for editing
+        // obtener lote y poblar formulario de lote para editar
         const res = await fetch(API_BASE + '/find_lote_by_id/?' + new URLSearchParams({ id }).toString());
         const parsed = await parseResponseFlexible(res);
         const item = extractDataObject(parsed);
         if (!item) throw new Error('lote no encontrado');
         if ($loteForm) {
-          // ensure hidden id
+          // asegurar id oculto
           let idEl = document.getElementById('lote-id');
           if (!idEl) { idEl = document.createElement('input'); idEl.type = 'hidden'; idEl.id = 'lote-id'; idEl.name = 'id'; $loteForm.appendChild(idEl); }
           idEl.value = item._id || '';
@@ -814,7 +814,7 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-// Search/Filter functionality
+// Funcionalidad de búsqueda/filtrado
 function filterMaduradores(searchTerm) {
   if (!searchTerm || searchTerm.trim() === '') {
     renderMaduradores(allMaduradores);
@@ -828,7 +828,7 @@ function filterMaduradores(searchTerm) {
     const notas = String(m.notas || '').toLowerCase();
     const loteStr = formatLoteDisplay(m.lote).toLowerCase();
     
-    // Check if searching for "madurador 1", "mad 1", "#1", etc.
+    // Verificar si se está buscando "madurador 1", "mad 1", "#1", etc.
     const maduradorMatch = term.match(/(?:mad(?:urador)?|#)\s*(\d+)/i);
     if (maduradorMatch && maduradorMatch[1] === maduradorNum) {
       return true;
@@ -856,7 +856,7 @@ function filterLotes(searchTerm) {
   renderLotes(filtered);
 }
 
-// Attach search event listeners
+// Adjuntar event listeners de búsqueda
 if ($searchMaduradores) {
   $searchMaduradores.addEventListener('input', (e) => {
     filterMaduradores(e.target.value);
