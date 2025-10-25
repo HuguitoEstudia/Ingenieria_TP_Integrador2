@@ -33,9 +33,9 @@
       <h2 id="form-title">Agregar Registro</h2>
       <form id="record-form">
         <input type="hidden" id="record-id" name="id" value="">
-        <!-- Hidden field used to preserve lote object when editing -->
+        <!-- Campo ocultado: se utiliza para preservar el objeto lote al editar -->
         <input type="hidden" id="lote-obj" name="lote_obj" value="">
-        <!-- When creating a madurador we will show a select of existing lotes here (populated by JS) -->
+        <!-- Cuando se crea un madurador, mostraremos un select de lotes existentes acá (poblado por JS) -->
         <label id="lote-select-label" class="hidden">Seleccionar Lote
           <select id="lote-select"></select>
         </label>
@@ -51,8 +51,6 @@
             </select>
         </label>
         <label>Notas <input name="notas"></label>
-        <!-- Hidden: lote is set via select, not manual input -->
-        <input name="lote" type="hidden">
         <div class="actions">
           <button type="submit">Guardar</button>
           <button type="button" id="cancel">Cancelar</button>
@@ -60,7 +58,7 @@
       </form>
     </section>
 
-    <!-- Lote form (separate) -->
+    <!-- Formulario Lote -->
     <section id="lote-form" class="hidden">
       <h2 id="lote-form-title">Agregar nuevo Lote</h2>
       <form id="lote-record-form">
